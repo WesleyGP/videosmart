@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html class="dark" lang="pt-BR">
+
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>TranscribeYT - Análise Inteligente</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+    rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#1337ec",
+            "background-dark": "#0c0e14",
+            "card-dark": "#161821",
+            "border-dark": "#262936",
+            "text-secondary": "#9da1b9",
+          }
+        },
+      },
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      scroll-behavior: smooth;
+    }
+
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    /* Better Markdown Rendering */
+    #analysis-result h1 {
+      font-size: 1.5rem;
+      font-weight: 800;
+      margin-bottom: 1rem;
+      color: white;
+    }
+
+    #analysis-result h2 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-top: 1.5rem;
+      margin-bottom: 0.75rem;
+      color: white;
+    }
+
+    #analysis-result h3 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-top: 1.25rem;
+      margin-bottom: 0.5rem;
+      color: white;
+    }
+
+    #analysis-result p {
+      margin-bottom: 1rem;
+      line-height: 1.6;
+    }
+
+    #analysis-result ul,
+    #analysis-result ol {
+      margin-bottom: 1rem;
+      padding-left: 1.5rem;
+    }
+
+    #analysis-result ul {
+      list-style-type: disc;
+    }
+
+    #analysis-result ol {
+      list-style-type: decimal;
+    }
+
+    #analysis-result li {
+      margin-bottom: 0.5rem;
+    }
+
+    #analysis-result hr {
+      border-color: #262936;
+      margin: 1.5rem 0;
+    }
+  </style>
+</head>
+
+<body class="bg-background-dark text-slate-100 antialiased min-h-screen flex flex-col pt-8 pb-12">
+  <div class="max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-8">
+      <div class="flex items-center gap-3">
+        <div
+          class="flex items-center justify-center w-10 h-10 rounded-xl bg-primary text-white shadow-lg shadow-primary/20">
+          <span class="material-symbols-outlined text-[24px]">graphic_eq</span>
+        </div>
+        <h1 class="text-2xl font-black tracking-tight">TranscribeYT</h1>
+      </div>
+      <div
+        class="text-xs font-medium text-text-secondary bg-card-dark px-3 py-1.5 rounded-full border border-border-dark">
+        IA: GPT-4.1 Mini
+      </div>
+    </div>
+
+    <!-- Main Input Section -->
+    <div class="bg-card-dark rounded-2xl border border-border-dark p-6 shadow-2xl mb-8">
+      <div class="flex flex-col md:flex-row gap-4">
+        <div class="relative flex-1 group">
+          <div
+            class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-text-secondary group-focus-within:text-primary transition-colors">
+            <span class="material-symbols-outlined">link</span>
+          </div>
+          <input id="video-url" type="text"
+            class="w-full h-14 bg-background-dark border-border-dark rounded-xl pl-12 text-white placeholder-text-secondary focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+            placeholder="Cole o link do YouTube aqui..." />
+        </div>
+        <button id="extract-btn"
+          class="h-14 px-8 bg-primary hover:bg-primary-light text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/20">
+          <span>Extrair Conteúdo</span>
+          <span class="material-symbols-outlined text-[20px]">magic_button</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Results Section (Visible after extraction) -->
+    <div id="results-area" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-6 animate-in fade-in duration-500">
+
+      <!-- Video Info (Sidebar) -->
+      <div class="lg:col-span-4 space-y-6">
+        <div class="bg-card-dark rounded-2xl border border-border-dark overflow-hidden">
+          <div id="thumbnail-container" class="aspect-video bg-background-dark relative">
+            <img id="video-thumbnail" src="" class="w-full h-full object-cover" />
+            <div
+              class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+              <span class="material-symbols-outlined text-white text-4xl">play_circle</span>
+            </div>
+          </div>
+          <div class="p-4">
+            <h2 id="video-title" class="font-bold text-sm mb-1 truncate">Título do Vídeo</h2>
+            <p id="video-id-text" class="text-[10px] uppercase tracking-widest text-text-secondary opacity-50">ID: ---
+            </p>
+          </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="grid grid-cols-2 gap-3">
+          <button id="copy-transcript-btn"
+            class="flex items-center justify-center gap-2 py-3 bg-background-dark border border-border-dark rounded-xl text-xs font-semibold hover:bg-border-dark transition-colors">
+            <span class="material-symbols-outlined text-sm">content_copy</span>
+            Copiar Texto
+          </button>
+          <button id="download-transcript-btn"
+            class="flex items-center justify-center gap-2 py-3 bg-background-dark border border-border-dark rounded-xl text-xs font-semibold hover:bg-border-dark transition-colors">
+            <span class="material-symbols-outlined text-sm">download</span>
+            Baixar .TXT
+          </button>
+        </div>
+      </div>
+
+      <!-- Content (Main) -->
+      <div class="lg:col-span-8 space-y-6">
+
+        <!-- Tabs -->
+        <div class="bg-card-dark rounded-2xl border border-border-dark overflow-hidden flex flex-col h-[600px]">
+          <div class="flex border-b border-border-dark bg-background-dark/50">
+            <button id="tab-transcript"
+              class="flex-1 py-4 text-sm font-bold border-b-2 border-primary text-white bg-card-dark">Transcrição</button>
+            <button id="tab-analysis"
+              class="flex-1 py-4 text-sm font-bold border-b-2 border-transparent text-text-secondary hover:text-white transition-colors">IA
+              Inteligente</button>
+          </div>
+
+          <!-- Transcript Tab Content -->
+          <div id="content-transcript" class="flex-1 overflow-y-auto p-6 space-y-4 no-scrollbar">
+            <!-- Segments placeholder -->
+          </div>
+
+          <!-- Analysis Tab Content -->
+          <div id="content-analysis" class="hidden flex-1 flex flex-col overflow-hidden">
+            <div class="p-4 bg-background-dark/30 border-b border-border-dark flex items-center gap-3">
+              <select id="analysis-mode"
+                class="flex-1 bg-background-dark border-border-dark text-sm rounded-lg text-slate-300 focus:ring-primary h-10">
+                <option value="summary">Resumo Inteligente</option>
+                <option value="translate">Tradução (PT-BR)</option>
+                <option value="bullets">Bullet Points</option>
+                <option value="checklist">Checklist Prático</option>
+                <option value="insights">Insights Avançados</option>
+                <option value="simplify">Explicação Simplificada</option>
+                <option value="detailed">Explicação Detalhada</option>
+                <option value="chapters">Capítulos Automáticos</option>
+                <option value="mindmap">Mapa Mental</option>
+                <option value="concepts">Conceitos Chave</option>
+                <option value="study_plan">Plano de Estudo</option>
+              </select>
+              <button id="analyze-btn"
+                class="px-6 h-10 bg-primary hover:bg-primary-light text-white text-xs font-bold rounded-lg transition-all shadow-lg shadow-primary/10">
+                Analisar
+              </button>
+              <button id="copy-analysis-btn"
+                class="h-10 w-10 flex items-center justify-center bg-background-dark border border-border-dark rounded-lg hover:text-primary transition-colors disabled:opacity-30"
+                disabled>
+                <span class="material-symbols-outlined text-sm">content_copy</span>
+              </button>
+            </div>
+            <div id="analysis-result" class="flex-1 overflow-y-auto p-8 no-scrollbar text-slate-300 text-sm">
+              <div class="flex flex-col items-center justify-center h-full opacity-30 text-center">
+                <span class="material-symbols-outlined text-4xl mb-2">psychology</span>
+                <p>Selecione um modo e clique em analisar</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div id="empty-state" class="flex flex-col items-center justify-center py-20 opacity-30">
+      <span class="material-symbols-outlined text-6xl mb-4">video_library</span>
+      <p class="text-sm">Insira o link acima para começar</p>
+    </div>
+
+  </div>
+
+  <script>
+    const input = document.getElementById('video-url');
+    const extractBtn = document.getElementById('extract-btn');
+    const resultsArea = document.getElementById('results-area');
+    const emptyState = document.getElementById('empty-state');
+    const thumbnail = document.getElementById('video-thumbnail');
+    const videoTitle = document.getElementById('video-title');
+    const videoIdText = document.getElementById('video-id-text');
+    const transcriptContent = document.getElementById('content-transcript');
+    const analysisResult = document.getElementById('analysis-result');
+    const analyzeBtn = document.getElementById('analyze-btn');
+    const copyAnalysisBtn = document.getElementById('copy-analysis-btn');
+
+    let currentTranscript = "";
+    let currentVideoId = "";
+
+    // Tabs logic
+    const tabTranscript = document.getElementById('tab-transcript');
+    const tabAnalysis = document.getElementById('tab-analysis');
+    const contentTranscript = document.getElementById('content-transcript');
+    const contentAnalysis = document.getElementById('content-analysis');
+
+    tabTranscript.onclick = () => {
+      tabTranscript.classList.add('border-primary', 'text-white', 'bg-card-dark');
+      tabTranscript.classList.remove('border-transparent', 'text-text-secondary');
+      tabAnalysis.classList.remove('border-primary', 'text-white', 'bg-card-dark');
+      tabAnalysis.classList.add('border-transparent', 'text-text-secondary');
+      contentTranscript.classList.remove('hidden');
+      contentAnalysis.classList.add('hidden');
+    };
+
+    tabAnalysis.onclick = () => {
+      tabAnalysis.classList.add('border-primary', 'text-white', 'bg-card-dark');
+      tabAnalysis.classList.remove('border-transparent', 'text-text-secondary');
+      tabTranscript.classList.remove('border-primary', 'text-white', 'bg-card-dark');
+      tabTranscript.classList.add('border-transparent', 'text-text-secondary');
+      contentAnalysis.classList.remove('hidden');
+      contentTranscript.classList.add('hidden');
+    };
+
+    function formatTime(seconds) {
+      const mins = Math.floor(seconds / 60);
+      const secs = Math.floor(seconds % 60);
+      return `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    async function transcribe() {
+      const url = input.value.trim();
+      if (!url) { alert("Cole um link do YouTube."); return; }
+
+      extractBtn.disabled = true;
+      extractBtn.innerHTML = `<span class="animate-spin material-symbols-outlined">sync</span><span>Extraindo...</span>`;
+
+      try {
+        const response = await fetch('http://localhost:8000/api/transcribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url })
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.detail || "Erro no servidor.");
+
+        currentVideoId = data.video_id;
+        currentTranscript = "";
+
+        // Show results area
+        emptyState.classList.add('hidden');
+        resultsArea.classList.remove('hidden');
+
+        // Set Thumbnail
+        thumbnail.src = `https://img.youtube.com/vi/${currentVideoId}/maxresdefault.jpg`;
+        videoTitle.textContent = `VÍDEO: ${currentVideoId}`;
+        videoIdText.textContent = `ID: ${currentVideoId}`;
+
+        // Build Transcript
+        transcriptContent.innerHTML = "";
+        data.transcript.forEach(seg => {
+          const startTime = formatTime(seg.start);
+          currentTranscript += `[${startTime}] ${seg.text}\n`;
+          const div = document.createElement('div');
+          div.className = "flex gap-4 p-3 hover:bg-background-dark rounded-xl transition-colors group";
+          div.innerHTML = `
+            <span class="text-primary font-mono font-bold text-xs pt-1">${startTime}</span>
+            <p class="text-slate-300 text-sm leading-relaxed">${seg.text}</p>
+          `;
+          transcriptContent.appendChild(div);
+        });
+
+      } catch (err) {
+        alert(err.message);
+      } finally {
+        extractBtn.disabled = false;
+        extractBtn.innerHTML = `<span>Extrair Conteúdo</span><span class="material-symbols-outlined text-[20px]">magic_button</span>`;
+      }
+    }
+
+    async function analyze() {
+      if (!currentTranscript) return;
+
+      const mode = document.getElementById('analysis-mode').value;
+      analyzeBtn.disabled = true;
+      analyzeBtn.innerHTML = `<span class="animate-spin material-symbols-outlined text-sm">sync</span>`;
+      analysisResult.innerHTML = '<div class="flex flex-col items-center justify-center h-full py-12"><div class="animate-bounce mb-4 text-primary"><span class="material-symbols-outlined text-5xl">auto_awesome</span></div><p class="animate-pulse font-bold text-xs uppercase tracking-widest text-text-secondary">Processando Inteligência...</p></div>';
+
+      try {
+        const response = await fetch('http://localhost:8000/api/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mode, text: currentTranscript })
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.detail || "Erro ao analisar.");
+
+        // Render Markdown to HTML using marked.js
+        analysisResult.innerHTML = marked.parse(data.result);
+        copyAnalysisBtn.disabled = false;
+
+      } catch (err) {
+        analysisResult.innerHTML = `<p class="text-red-500 font-bold">ERRO: ${err.message}</p>`;
+      } finally {
+        analyzeBtn.disabled = false;
+        analyzeBtn.innerText = "Analisar";
+      }
+    }
+
+    extractBtn.onclick = transcribe;
+    analyzeBtn.onclick = analyze;
+
+    document.getElementById('copy-transcript-btn').onclick = () => {
+      if (!currentTranscript) return;
+      navigator.clipboard.writeText(currentTranscript);
+      alert("Sucesso! Transcrição copiada.");
+    };
+
+    document.getElementById('copy-analysis-btn').onclick = () => {
+      const text = analysisResult.innerText;
+      if (!text) return;
+      navigator.clipboard.writeText(text);
+
+      const icon = document.querySelector('#copy-analysis-btn span');
+      icon.textContent = "check";
+      setTimeout(() => icon.textContent = "content_copy", 2000);
+    };
+
+    document.getElementById('download-transcript-btn').onclick = () => {
+      if (!currentTranscript) return;
+      const blob = new Blob([currentTranscript], { type: 'text/plain' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `transcricao_${currentVideoId}.txt`;
+      a.click();
+    };
+
+    input.onkeypress = (e) => { if (e.key === 'Enter') transcribe(); };
+  </script>
+</body>
+
+</html>
