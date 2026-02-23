@@ -31,3 +31,4 @@ Hospede o site estático no Cloudflare.
 
 ---
 *MVP desenvolvido com auxílio de Antigravity AI.*
+
