@@ -26,30 +26,38 @@ def extract_video_id(url: str) -> str:
 
 
 
+import os
+
 def get_transcript(video_id: str):
     """
     Fetches the transcript for a given video ID.
-    Returns a list of segments or an error message.
+    Supports cookies.txt to bypass cloud provider IP blocks.
     """
+    cookie_path = 'cookies.txt'
+    
     try:
-        # Instantiate the API class
-        api = YouTubeTranscriptApi()
-        # Try preferred languages
-        transcript = api.fetch(video_id, languages=['pt', 'en'])
+        # Check if cookies file exists
+        if os.path.exists(cookie_path):
+            transcript = YouTubeTranscriptApi.get_transcript(video_id, languages=['pt', 'en'], cookies=cookie_path)
+        else:
+            transcript = YouTubeTranscriptApi.get_transcript(video_id, languages=['pt', 'en'])
         
-        # In this version, we get a FetchedTranscript object, so we convert to raw data
-        if hasattr(transcript, 'to_raw_data'):
-            return transcript.to_raw_data()
         return transcript
-    except Exception:
+    except Exception as e:
         try:
             # Fallback to default fetch
-            transcript = YouTubeTranscriptApi().fetch(video_id)
-            if hasattr(transcript, 'to_raw_data'):
-                return transcript.to_raw_data()
+            if os.path.exists(cookie_path):
+                transcript = YouTubeTranscriptApi.get_transcript(video_id, cookies=cookie_path)
+            else:
+                transcript = YouTubeTranscriptApi.get_transcript(video_id)
             return transcript
-        except Exception as e:
-            return {"error": f"Não foi possível obter a transcrição: {str(e)}"}
+        except Exception as e2:
+            error_msg = str(e2)
+            if "cookies" in error_msg.lower():
+                return {"error": "Erro com os cookies do YouTube. Tente exportar novamente."}
+            if "blocked" in error_msg.lower() or "cloud provider" in error_msg.lower():
+                return {"error": "O YouTube bloqueou o acesso do Render. Siga as instruções para configurar o cookies.txt."}
+            return {"error": f"Não foi possível obter a transcrição: {error_msg}"}
 
 
 
